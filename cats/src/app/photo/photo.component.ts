@@ -10,18 +10,18 @@ export class PhotoComponent implements AfterViewInit {
 
     readonly stars = [1, 2, 3, 4, 5];
 
-    score: number|undefined;
+    score: number | undefined;
 
     @Input() photo: Photo;
 
-    constructor(private readonly photoService: PhotoService) { 
-     }
+    constructor(private readonly photoService: PhotoService) {
+    }
 
-     ngAfterViewInit() {
+    ngAfterViewInit() {
         this.photoService.getPhotoScore(this.photo.id).subscribe(score => {
             this.score = score;
         });
-     }
+    }
 
     getStarFill(index: number) {
         if (index <= this.score) {

@@ -6,7 +6,7 @@
         [src]="photo.url" />
     <mat-card-content>
         <button mat-icon-button
-            *ngFor="let star of stars; trackBy:star"
+            *ngFor="let star of stars"
             (click)="scorePhoto(star)">
             <mat-icon>{{getStarFill(star)}}</mat-icon>
         </button>

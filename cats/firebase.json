@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "public": "dist/cats",
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
