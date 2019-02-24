@@ -1,0 +1,18 @@
+:host {
+    margin: 32px;
+    display: inherit;
+}
+
+.photo-card {
+   width: 400px;
+}
+
+mat-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+mat-slider {
+    width: 200px;
+}
