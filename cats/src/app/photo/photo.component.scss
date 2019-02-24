@@ -9,10 +9,7 @@
 
 mat-card-content {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-}
-
-mat-slider {
-    width: 200px;
+    justify-content: center;
 }

@@ -4,8 +4,8 @@ import { AuthService } from './auth.service';
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-root',
-  template: `
+    selector: 'app-root',
+    template: `
     <mat-toolbar color="primary">
         <span>Rate Some Cats</span>
         <span class="fill-space"></span>
@@ -21,12 +21,12 @@ import { Component } from '@angular/core';
         </button>
     </mat-toolbar>
     <div class="photo-container">
-        <app-photo *ngFor="let photo of photoService.getPhotos() | async"
+        <app-photo *ngFor="let photo of photoService.getPhotos() | async; trackBy:trackByFn"
                 [photo]="photo">
         </app-photo>
     </div>
   `,
-  styles: [],
+    styles: [],
 })
 export class AppComponent {
     readonly isSignedIn: Observable<boolean>;
@@ -34,5 +34,9 @@ export class AppComponent {
     constructor(readonly authService: AuthService,
         readonly photoService: PhotoService) {
         this.isSignedIn = this.authService.isUserSignedIn();
+    }
+
+    trackByFn(message: any) {
+        return message && message.id;
     }
 }
