@@ -65,19 +65,20 @@ export class PhotoService {
     }
 
     getPhotoScore(photoId: string) {
-        const user = this.authService.getCurrentUser();
-        if (!user) {
-            return of(undefined);
-        }
-        return this.database.collection<Photo>('/scores', ref => ref.where('user', '==', user.uid)
-            .where('photo', '==', photoId))
-            .get().pipe(map(result => {
-                if (result.size >= 1) {
-                    return result.docs[0].data().score;
-                } else {
-                    return undefined;
-                }
-            }));
+        return this.authService.user.pipe(switchMap(user => {
+            if (!user) {
+                return of(undefined);
+            }
+            return this.database.collection<Photo>('/scores', ref => ref.where('user', '==', user.uid)
+                .where('photo', '==', photoId))
+                .get().pipe(map(result => {
+                    if (result.size >= 1) {
+                        return result.docs[0].data().score;
+                    } else {
+                        return undefined;
+                    }
+                }));
+        }));
     }
 
     scorePhoto(photo: Photo, score: number) {
