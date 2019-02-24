@@ -4,7 +4,7 @@ A sample Firebase app to rate pictures of cats.
 
 The app is hosted at: https://ratesomecats.com
 
-<img src="https://raw.githubusercontent.com/agale123/cats/master/screenshot.jpg" width="500px">
+<img src="https://raw.githubusercontent.com/agale123/cats/master/screenshot.jpg" width="700px">
 
 # Deploy app
 
