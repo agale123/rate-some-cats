@@ -11,6 +11,15 @@ body {
     flex: 1 1 auto;
 }
 
+app-photo {
+    margin-top: 32px;
+    display: inherit;
+}
+
+app-photo:last-child {
+    margin-bottom: 32px;
+}
+
 .photo-container {
     display: flex;
     flex-direction: column;

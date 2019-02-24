@@ -1,12 +1,12 @@
 import { Photo, PhotoService } from './../photo.service';
-import { Component, Input } from '@angular/core';
+import { Component, Input, AfterViewInit } from '@angular/core';
 
 @Component({
     selector: 'app-photo',
     templateUrl: './photo.component.html',
     styleUrls: ['./photo.component.scss']
 })
-export class PhotoComponent {
+export class PhotoComponent implements AfterViewInit {
 
     readonly stars = [1, 2, 3, 4, 5];
 
@@ -14,7 +14,14 @@ export class PhotoComponent {
 
     @Input() photo: Photo;
 
-    constructor(private readonly photoService: PhotoService) { }
+    constructor(private readonly photoService: PhotoService) { 
+     }
+
+     ngAfterViewInit() {
+        this.photoService.getPhotoScore(this.photo.id).subscribe(score => {
+            this.score = score;
+        });
+     }
 
     getStarFill(index: number) {
         if (index <= this.score) {
@@ -24,7 +31,8 @@ export class PhotoComponent {
     }
 
     scorePhoto(index: number) {
-        this.score = index;
-        this.photoService.scorePhoto(this.photo, this.score);
+        if (this.photoService.scorePhoto(this.photo, index)) {
+            this.score = index;
+        }
     }
 }

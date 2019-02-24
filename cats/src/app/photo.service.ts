@@ -1,5 +1,13 @@
-import { Observable, of } from 'rxjs';
+import { AuthService } from './auth.service';
+import { map, switchMap, shareReplay } from 'rxjs/operators';
+import { Observable, of, forkJoin, combineLatest } from 'rxjs';
 import { Injectable } from '@angular/core';
+import { AngularFirestore } from 'angularfire2/firestore';
+import { AngularFireStorage } from 'angularfire2/storage';
+
+export interface Count {
+    count: number;
+}
 
 export interface Photo {
     id: string;
@@ -12,27 +20,94 @@ export interface Photo {
 })
 export class PhotoService {
 
-    constructor() { }
+    readonly photos: Observable<Photo[]>;
+
+    constructor(private readonly database: AngularFirestore,
+        private readonly storage: AngularFireStorage,
+        private readonly authService: AuthService) {
+        this.photos = this.database.collection<Count>('/photos')
+            .valueChanges()
+            .pipe(
+                map(entry => Array.from(Array(entry[0].count).keys())),
+                switchMap(ids => {
+                    const observables = ids.map(id => {
+                        const ref = this.storage.ref(`${id}.png`);
+                        const scoreObs = this.database.collection<Photo>('/scores', ref => ref.where('photo', '==', `${id}`))
+                            .get()
+                            .pipe(map(result => {
+                                if (result.size === 0) {
+                                    return 0;
+                                } else {
+                                    return result.docs.reduce((acc, cur) => acc + cur.data().score, 0) / result.size;
+                                }
+                            }))
+
+                        return combineLatest(ref.getDownloadURL(), scoreObs)
+                            .pipe(map(([url, score]) => {
+                                return {
+                                    url,
+                                    id: `${id}`,
+                                    score,
+                                };
+                            }));
+                    });
+                    return forkJoin(...observables);
+                }),
+                map(photos => {
+                    return photos.sort((a, b) => (a.score > b.score) ? -1 : ((b.score > a.score) ? 1 : 0));
+                }),
+                shareReplay(1),
+            );
+    }
 
     getPhotos(): Observable<Photo[]> {
-        // TODO: Fetch list of photos, images, and scores.
-        const a = {
-            id: '123',
-            url: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&w=1000&q=80',
-            score: 4.6,
-        };
+        return this.photos;
+    }
 
-        const b = {
-            id: '456',
-            url: 'https://www.petsfriendsunnyvale.com/storage/app/media/bigstock-British-Longhair-Cat--Months-10206431.jpg',
-            score: 3.5,
-        };
-
-        return of([a, b]);
+    getPhotoScore(photoId: string) {
+        const user = this.authService.getCurrentUser();
+        if (!user) {
+            return of(undefined);
+        }
+        return this.database.collection<Photo>('/scores', ref => ref.where('user', '==', user.uid)
+            .where('photo', '==', photoId))
+            .get().pipe(map(result => {
+                if (result.size >= 1) {
+                    return result.docs[0].data().score;
+                } else {
+                    return undefined;
+                }
+            }));
     }
 
     scorePhoto(photo: Photo, score: number) {
-        console.log(`Photo ${photo.id} has score ${score}`);
-        // TODO: Write rating to database.
+        const user = this.authService.getCurrentUser();
+        if (!user) {
+            if (confirm('Please login to rate photos.')) {
+                // Prompt for login.
+                this.authService.signIn();
+            }
+            return false;
+        }
+        const matchExisting = ref => {
+            return ref.where('user', '==', user.uid)
+                .where('photo', '==', photo.id)
+        };
+        this.database.collection('/scores', matchExisting)
+            .get().subscribe(existingScores => {
+                if (existingScores.size >= 1) {
+                    // Update previous score.
+                    this.database.doc(existingScores.docs[0].ref)
+                        .update({ score });
+                } else if (user) {
+                    // Write new score.
+                    this.database.collection('/scores').add({
+                        photo: photo.id,
+                        score,
+                        user: user.uid,
+                    });
+                }
+            });
+        return true;
     }
 }

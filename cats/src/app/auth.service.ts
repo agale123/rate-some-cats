@@ -1,23 +1,35 @@
+import { map, shareReplay } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { Injectable } from '@angular/core';
+import { AngularFireAuth } from 'angularfire2/auth';
+import { auth } from 'firebase/app';
 
 @Injectable({
-  providedIn: 'root'
+    providedIn: 'root'
 })
 export class AuthService {
 
-  constructor() { }
+    readonly isSignedIn: Observable<boolean>;
 
-  signIn() {
-      // TODO: Use firebase auth
-  }
+    constructor(private readonly afAuth: AngularFireAuth) {
+        this.isSignedIn = this.afAuth.user.pipe(map(user => {
+            return !!user;
+        }), shareReplay(1));
+    }
 
-  signOut() {
-      // TODO: Use firebase auth
-  }
+    signIn() {
+        this.afAuth.auth.signInWithPopup(new auth.GoogleAuthProvider());
+    }
 
-  isUserSignedIn(): Observable<boolean> {
-      // TODO: Use firebase auth
-      return of(false);
-  }
+    signOut() {
+        this.afAuth.auth.signOut();
+    }
+
+    getCurrentUser() {
+        return this.afAuth.auth.currentUser;
+    }
+
+    isUserSignedIn(): Observable<boolean> {
+        return this.isSignedIn;
+    }
 }
