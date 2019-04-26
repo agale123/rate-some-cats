@@ -1,6 +1,6 @@
 <mat-card class="photo-card">
     <mat-card-header>
-        <mat-card-title>Score: {{photo.score}}</mat-card-title>
+        <mat-card-title>Score: {{photo.score.toFixed(2)}}</mat-card-title>
     </mat-card-header>
     <img mat-card-image
         [src]="photo.url" />

@@ -1,6 +1,6 @@
 import { AuthService } from './auth.service';
 import { map, switchMap, shareReplay } from 'rxjs/operators';
-import { Observable, of, forkJoin, combineLatest } from 'rxjs';
+import { Observable, of, combineLatest } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from 'angularfire2/firestore';
 import { AngularFireStorage } from 'angularfire2/storage';
@@ -25,39 +25,39 @@ export class PhotoService {
     constructor(private readonly database: AngularFirestore,
         private readonly storage: AngularFireStorage,
         private readonly authService: AuthService) {
-        this.photos = this.database.collection<Count>('/photos')
-            .valueChanges()
-            .pipe(
-                map(entry => Array.from(Array(entry[0].count).keys())),
-                switchMap(ids => {
-                    const observables = ids.map(id => {
-                        const ref = this.storage.ref(`${id}.png`);
-                        const scoreObs = this.database.collection<Photo>('/scores', ref => ref.where('photo', '==', `${id}`))
-                            .get()
-                            .pipe(map(result => {
-                                if (result.size === 0) {
-                                    return 0;
-                                } else {
-                                    return result.docs.reduce((acc, cur) => acc + cur.data().score, 0) / result.size;
-                                }
-                            }))
+            this.photos =  this.database.collection<Count>('/photos')
+                .valueChanges()
+                .pipe(
+                    map(entry => Array.from(Array(entry[0].count).keys())),
+                    switchMap(ids => {
+                        const observables = ids.map(id => {
+                            const ref = this.storage.ref(`${id}.png`);
+                            const scoreObs = this.database.collection<Photo>('/scores', ref => ref.where('photo', '==', `${id}`))
+                                .valueChanges()
+                                .pipe(map(result => {
+                                    if (result.length === 0) {
+                                        return 0;
+                                    } else {
+                                        return result.reduce((acc, cur) => acc + cur.score, 0) / result.length;
+                                    }
+                                }))
 
-                        return combineLatest(ref.getDownloadURL(), scoreObs)
-                            .pipe(map(([url, score]) => {
-                                return {
-                                    url,
-                                    id: `${id}`,
-                                    score,
-                                };
-                            }));
-                    });
-                    return forkJoin(...observables);
-                }),
-                map(photos => {
-                    return photos.sort((a, b) => (a.score > b.score) ? -1 : ((b.score > a.score) ? 1 : 0));
-                }),
-                shareReplay(1),
-            );
+                            return combineLatest(ref.getDownloadURL(), scoreObs)
+                                .pipe(map(([url, score]) => {
+                                    return {
+                                        url,
+                                        id: `${id}`,
+                                        score,
+                                    };
+                                }));
+                        });
+                        return combineLatest(...observables);
+                    }),
+                    map(photos => {
+                        return photos.sort((a, b) => (a.score > b.score) ? -1 : ((b.score > a.score) ? 1 : 0));
+                    }),
+                    shareReplay(1),
+                );
     }
 
     getPhotos(): Observable<Photo[]> {

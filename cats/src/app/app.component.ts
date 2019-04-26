@@ -21,7 +21,7 @@ import { Component } from '@angular/core';
         </button>
     </mat-toolbar>
     <div class="photo-container">
-        <app-photo *ngFor="let photo of photoService.getPhotos() | async; trackBy:trackByFn"
+        <app-photo *ngFor="let photo of photoService.getPhotos() | async"
                 [photo]="photo">
         </app-photo>
     </div>
